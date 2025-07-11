@@ -415,22 +415,22 @@ class TrainConfig:
     # Random seed that will be used by random generators during training.
     seed: int = 42
     # Global batch size.
-    batch_size: int = 32
+    batch_size: int = 128
     # Number of workers to use for the data loader. Increasing this number will speed up data loading but
     # will increase memory and CPU usage.
     num_workers: int = 2
     # Number of train steps (batches) to run.
-    num_train_steps: int = 30_000
+    num_train_steps: int = 2500
 
     # How often (in steps) to log training metrics.
     log_interval: int = 100
     # How often (in steps) to save checkpoints.
-    save_interval: int = 1000
+    save_interval: int = 500
     # If set, any existing checkpoints matching step % keep_period == 0 will not be deleted.
     keep_period: int | None = 5000
 
     # If true, will overwrite the checkpoint directory if it already exists.
-    overwrite: bool = False
+    overwrite: bool = True
     # If true, will resume training from the last checkpoint.
     resume: bool = False
 
@@ -559,7 +559,7 @@ _CONFIGS = [
         ),
         # Here you define which pre-trained checkpoint you want to load to initialize the model.
         # This should match the model config you chose above -- i.e. in this case we use the pi0 base model.
-        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_base/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_droid/params"),
         # Below you can define other hyperparameters like the learning rate, number of training steps, etc.
         # Check the base TrainConfig class for a full list of available hyperparameters.
         num_train_steps=30_000,
@@ -688,6 +688,35 @@ _CONFIGS = [
         log_interval=100,
         save_interval=5000,
         keep_period=20_000,
+        num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
+    ),
+    TrainConfig(
+        name="remembertask_finetune",
+        model=pi0_fast.Pi0FASTConfig(
+            action_dim=8,
+            action_horizon=16,
+            max_token_len=180,
+        ),
+        data=RLDSDroidDataConfig(
+            repo_id="remember_task_dataset/1.0.0/",
+            # Set this to the path to your DROID RLDS dataset (the parent directory of the `droid` directory).
+            rlds_data_dir="remember_task_dataset/1.0.0/",
+            action_space=droid_rlds_dataset.DroidActionSpace.JOINT_VELOCITY,
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_droid/params"),
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=1_000,
+            peak_lr=2.5e-5,
+            decay_steps=30000,
+            decay_lr=2.5e-6,
+        ),
+        # norm_stats=self._load_norm_stats(epath.Path("gs://openpi-assets/checkpoints/pi0_fast_droid/"))
+        # freeze_filter=pi0_fast.Pi0FASTConfig(action_dim=8, action_horizon=10, freeze_vision=True).get_freeze_filter(),
+        num_train_steps=2500,  # 100k steps should be sufficient, takes ~2 days on 8x H100s
+        batch_size=128,
+        log_interval=100,
+        save_interval=500,
+        keep_period=5000,
         num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
     ),
     #

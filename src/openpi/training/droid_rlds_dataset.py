@@ -7,6 +7,9 @@ The data loader also applies a few DROID-specific data filters / transformations
 
 from enum import Enum
 from enum import auto
+import dlimp as dl
+import tensorflow as tf
+import tensorflow_datasets as tfds
 
 
 class DroidActionSpace(Enum):
@@ -28,57 +31,55 @@ class DroidRldsDataset:
         action_space: DroidActionSpace = DroidActionSpace.JOINT_POSITION,
         max_loaded_steps_per_episode: int = 100,
         # Reduce this if you are running out of memory, but careful -- below ~100k shuffling is not sufficiently random.
-        shuffle_buffer_size: int = 250_000,
+        shuffle_buffer_size: int = 1000,
         num_parallel_reads: int = -1,  # -1 == tf.data.AUTOTUNE -- hack to not import tf at top level
         num_parallel_calls: int = -1,  # -1 == tf.data.AUTOTUNE -- hack to not import tf at top level
     ):
         # Import tensorflow here to not make it mandatory in case RLDS data loader is not used.
-        import dlimp as dl
-        import tensorflow as tf
-        import tensorflow_datasets as tfds
 
         # Configure Tensorflow with *no GPU devices* (to prevent clobber with PyTorch / JAX)
         tf.config.set_visible_devices([], "GPU")
 
-        builder = tfds.builder("droid", data_dir=data_dir)
+        builder = tfds.builder_from_directory(data_dir)
         dataset = dl.DLataset.from_rlds(builder, split="train", shuffle=shuffle, num_parallel_reads=num_parallel_reads)
 
         # Filter out any unsuccessful trajectories -- we use the file name to check this
-        dataset = dataset.filter(
-            lambda traj: tf.strings.regex_full_match(
-                traj["traj_metadata"]["episode_metadata"]["file_path"][0], ".*success.*"
-            )
-        )
+        # dataset = dataset.filter(
+        #     lambda traj: tf.strings.regex_full_match(
+        #         traj["traj_metadata"]["episode_metadata"]["file_path"][0], ".*success.*"
+        #     )
+        # )
 
         # Repeat dataset so we never run out of data.
-        dataset = dataset.repeat()
+        # dataset = dataset.repeat()
 
         def restructure(traj):
             """Reformat observation and action keys, sample language instruction."""
-            # Important: we use joint *position* action space -- easier to simulate!
-            actions = tf.concat(
-                (
-                    (
-                        traj["action_dict"]["joint_position"]
-                        if action_space == DroidActionSpace.JOINT_POSITION
-                        else traj["action_dict"]["joint_velocity"]
-                    ),
-                    traj["action_dict"]["gripper_position"],
-                ),
-                axis=-1,
-            )
+            actions = traj["actions"]
+            # actions = tf.concat(
+            #     (
+            #         (
+            #             traj["action_dict"]["joint_position"]
+            #             if action_space == DroidActionSpace.JOINT_POSITION
+            #             else traj["action_dict"]["joint_velocity"]
+            #         ),
+            #         traj["action_dict"]["gripper_position"],
+            #     ),
+            #     axis=-1,
+            # )
             # Randomly samples one of the two exterior images in DROID during training (we only train with one at a time).
             # Note: the "left" refers to the left camera in the stereo pair, we only train on the left camera.
             exterior_img = tf.cond(
                 tf.random.uniform(shape=[]) > 0.5,
-                lambda: traj["observation"]["exterior_image_1_left"],
-                lambda: traj["observation"]["exterior_image_2_left"],
+                lambda: traj["observation"]["exterior_image_1"],
+                lambda: traj["observation"]["exterior_image_2"],
             )
-            wrist_img = traj["observation"]["wrist_image_left"]
+            wrist_img = traj["observation"]["wrist_image"]
             # Randomly sample one of the three language instructions
-            instruction = tf.random.shuffle(
-                [traj["language_instruction"], traj["language_instruction_2"], traj["language_instruction_3"]]
-            )[0]
+            # instruction = tf.random.shuffle(
+            #     [traj["language_instruction"], traj["language_instruction_2"], traj["language_instruction_3"]]
+            # )[0]
+            instruction = traj["language_instruction"]
 
             return {
                 "actions": actions,
@@ -146,8 +147,10 @@ class DroidRldsDataset:
         dataset = dataset.shuffle(shuffle_buffer_size)
         dataset = dataset.batch(batch_size)
         # Note =>> Seems to reduce memory usage without affecting speed?
-        dataset = dataset.with_ram_budget(1)
-
+        # dataset = dataset.with_ram_budget(1)
+        # import pdb; pdb.set_trace()
+        # length_dataset = dataset.reduce(0, lambda x, _: x + 1).numpy()
+        # self.datalen = length_dataset
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -158,4 +161,4 @@ class DroidRldsDataset:
     def __len__(self):
         # This is the approximate number of samples in DROID after filtering.
         # Easier to hardcode than to iterate through the dataset and compute it.
-        return 20_000_000
+        return 50000

@@ -106,9 +106,6 @@ def main(config_name: str, max_frames: int | None = None):
             stats[key].update(values.reshape(-1, values.shape[-1]))
 
     norm_stats = {key: stats.get_statistics() for key, stats in stats.items()}
-    import pdb
-
-    pdb.set_trace()  # Debugging breakpoint
     output_path = config.assets_dirs / data_config.repo_id
     print(f"Writing stats to: {output_path}")
     normalize.save(output_path, norm_stats)

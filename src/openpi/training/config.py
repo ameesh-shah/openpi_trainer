@@ -701,6 +701,7 @@ _CONFIGS = [
             repo_id="remember_task_dataset/1.0.0/",
             # Set this to the path to your DROID RLDS dataset (the parent directory of the `droid` directory).
             rlds_data_dir="remember_task_dataset/1.0.0/",
+            assets=AssetsConfig(assets_dir="gs://openpi-assets/checkpoints/pi0_fast_droid/assets", asset_id="droid"),
             action_space=droid_rlds_dataset.DroidActionSpace.JOINT_VELOCITY,
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_droid/params"),

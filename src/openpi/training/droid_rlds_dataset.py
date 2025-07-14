@@ -51,7 +51,7 @@ class DroidRldsDataset:
         # )
 
         # Repeat dataset so we never run out of data.
-        # dataset = dataset.repeat()
+        dataset = dataset.repeat()
 
         def restructure(traj):
             """Reformat observation and action keys, sample language instruction."""

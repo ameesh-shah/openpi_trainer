@@ -750,6 +750,36 @@ _CONFIGS = [
         keep_period=5000,
         num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
     ),
+    TrainConfig(
+        name="remembertask_v3_finetune",
+        model=pi0_fast.Pi0FASTConfig(
+            action_dim=8,
+            action_horizon=10,
+            max_token_len=220,
+        ),
+        data=RLDSDroidDataConfig(
+            repo_id="remember_task_v3_dataset/1.0.0/",
+            # Set this to the path to your DROID RLDS dataset (the parent directory of the `droid` directory).
+            rlds_data_dir="remember_task_v3_dataset/1.0.0/",
+            assets=AssetsConfig(assets_dir="gs://openpi-assets/checkpoints/pi0_fast_droid/assets", asset_id="droid"),
+            action_space=droid_rlds_dataset.DroidActionSpace.JOINT_VELOCITY,
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_droid/params"),
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=1_000,
+            peak_lr=2.5e-5,
+            decay_steps=30000,
+            decay_lr=2.5e-6,
+        ),
+        # norm_stats=self._load_norm_stats(epath.Path("gs://openpi-assets/checkpoints/pi0_fast_droid/"))
+        # freeze_filter=pi0_fast.Pi0FASTConfig(action_dim=8, action_horizon=10, freeze_vision=True).get_freeze_filter(),
+        num_train_steps=3000,  # 100k steps should be sufficient, takes ~2 days on 8x H100s
+        batch_size=128,
+        log_interval=100,
+        save_interval=500,
+        keep_period=5000,
+        num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
+    ),
     #
     # ALOHA Sim configs. This config is used to demonstrate how to train on a simple simulated environment.
     #

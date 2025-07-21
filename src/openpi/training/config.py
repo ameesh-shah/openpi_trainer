@@ -829,7 +829,6 @@ _CONFIGS = [
         num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
     ),
     TrainConfig(
-<<<<<<< HEAD
         name="remembertask_finetune",
         model=pi0_fast.Pi0FASTConfig(
             action_dim=8,

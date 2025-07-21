@@ -918,7 +918,8 @@ _CONFIGS = [
         save_interval=500,
         keep_period=5000,
         num_workers=0,  # Important: RLDS DataLoader requires num_workers=0, handles multi-processing internally
-=======
+    ),
+    TrainConfig(
         # This config is for fine-tuning pi05-DROID on a custom (smaller) DROID dataset.
         # Here, we use LeRobot data format (like for all other fine-tuning examples)
         # To convert your custom DROID dataset (<10s of hours) to LeRobot format, see examples/droid/convert_droid_data_to_lerobot.py
@@ -941,7 +942,6 @@ _CONFIGS = [
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets-preview/checkpoints/pi05_droid/params"),
         num_train_steps=20_000,
         batch_size=32,
->>>>>>> upstream/kevin/pi05-support
     ),
     #
     # ALOHA Sim configs. This config is used to demonstrate how to train on a simple simulated environment.

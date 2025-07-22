@@ -30,7 +30,6 @@ def _parse_image(image) -> np.ndarray:
 @dataclasses.dataclass(frozen=True)
 class DroidInputs(transforms.DataTransformFn):
     # Determines which model will be used.
-    action_dim: int
     model_type: _model.ModelType
 
     def __call__(self, data: dict) -> dict:
@@ -39,7 +38,6 @@ class DroidInputs(transforms.DataTransformFn):
             # Ensure gripper position is a 1D array, not a scalar, so we can concatenate with joint positions
             gripper_pos = gripper_pos[np.newaxis]
         state = np.concatenate([data["observation/joint_position"], gripper_pos])
-        state = transforms.pad_to_dim(state, self.action_dim)
 
         # Possibly need to parse images to uint8 (H,W,C) since LeRobot automatically
         # stores as float32 (C,H,W), gets skipped for policy inference

@@ -1040,7 +1040,7 @@ _CONFIGS = [
             ),
             action_space=droid_rlds_dataset.DroidActionSpace.JOINT_VELOCITY,
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("/home/jovyan/shared/ameesh/vla-data-assets/balancetask_finetune/pyplan_finetuning/2999/params/"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/home/jovyan/shared/ameesh/vla-data-assets/models/remembertask_05_finetune/pyplan_finetuning/2999/params/"),
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
             peak_lr=2.5e-5,

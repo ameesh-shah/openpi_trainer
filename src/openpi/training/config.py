@@ -1032,9 +1032,9 @@ _CONFIGS = [
             action_horizon=16,
         ),
         data=RLDSDroidDataConfig(
-            repo_id="/home/jovyan/shared/ameesh/vla-data-assets/remember_full_task_dataset/1.0.0/",
+            repo_id="/home/jovyan/shared/ameesh/vla-data-assets/tfds_datasets/remember_full_task_dataset/1.0.0/",
             # Set this to the path to your DROID RLDS dataset (the parent directory of the `droid` directory).
-            rlds_data_dir="/home/jovyan/shared/ameesh/vla-data-assets/remember_full_task_dataset/1.0.0/",
+            rlds_data_dir="/home/jovyan/shared/ameesh/vla-data-assets/tfds_datasets/remember_full_task_dataset/1.0.0/",
             assets=AssetsConfig(
                 assets_dir="gs://openpi-assets-preview/checkpoints/pi05_droid/assets", asset_id="droid"
             ),
